@@ -64,7 +64,8 @@
               "buildTarget": "mi-app:build:production"
             },
             "development": {
-              "buildTarget": "mi-app:build:development"
+              "buildTarget": "mi-app:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
@@ -94,5 +95,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "a03359cd-c9f2-4d7d-8b09-406723413e5e"
   }
 }
