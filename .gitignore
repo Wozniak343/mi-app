@@ -41,3 +41,31 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Angular / Node
+node_modules/
+dist/
+tmp/
+.tmp/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json# keep! (no ignorar; se versiona)
+# Nota: NO ignores package-lock.json, se versiona. Esta línea es recordatorio.
+
+# IDE/Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.iml
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Misc
+.sass-cache/
+.parcel-cache/
