@@ -83,6 +83,30 @@ public static class ApiEndpoints
             }
         });
 
+        // Endpoint to delete a tarea by id
+        app.MapDelete("/api/tareas-usuarios/{id}", async (int id, DbRepository repo) =>
+        {
+            if (id <= 0)
+                return Results.BadRequest(new { error = "Id inválido" });
+
+            try
+            {
+                var deleted = await repo.DeleteTareaAsync(id);
+                if (!deleted)
+                    return Results.NotFound(new { error = $"No existe tarea con id {id}" });
+
+                return Results.Ok(new { deleted = true });
+            }
+            catch (InvalidOperationException inv)
+            {
+                return Results.BadRequest(new { error = inv.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: $"Error interno: {ex.Message}", statusCode: 500);
+            }
+        });
+
         // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.
     }
 }

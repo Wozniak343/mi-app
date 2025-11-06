@@ -220,4 +220,43 @@ WHERE Id = @id;";
             throw;
         }
     }
+
+    // Delete a tarea by id. Returns true if a row was deleted, false if not found.
+    public async Task<bool> DeleteTareaAsync(int id)
+    {
+        if (id <= 0) throw new InvalidOperationException("Id inválido.");
+
+        var conn = _db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+
+        await using var dbTrans = await conn.BeginTransactionAsync();
+        try
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = dbTrans;
+            cmd.CommandText = "DELETE FROM dbo.Tareas WHERE Id = @id; SELECT @@ROWCOUNT;";
+
+            var pId = cmd.CreateParameter();
+            pId.ParameterName = "@id";
+            pId.Value = id;
+            cmd.Parameters.Add(pId);
+
+            var result = await cmd.ExecuteScalarAsync();
+            await dbTrans.CommitAsync();
+
+            if (result is int rows)
+                return rows > 0;
+
+            // some providers return long
+            if (result is long l)
+                return l > 0;
+
+            return false;
+        }
+        catch
+        {
+            try { await dbTrans.RollbackAsync(); } catch { }
+            throw;
+        }
+    }
 }
