@@ -34,6 +34,8 @@ export class App implements OnInit {
   mostrarFormulario = signal(false);
   cargando = signal(false);
   errorMessage = signal<string | null>(null);
+  searchTerm = signal('');
+  searchState = signal<string>('');
 
   tareaForm: FormGroup;
 
@@ -63,6 +65,55 @@ export class App implements OnInit {
           this.cargando.set(false);
         }
       });
+  }
+
+  buscarTarea() {
+    const q = this.searchTerm().trim();
+    if (!q) {
+      // if only estado is set, still fetch with estado filter
+      if (this.searchState()) {
+        // trigger fetch by estado only
+        const stateVal = this.searchState() === 'true' ? 'true' : 'false';
+        const urlOnly = `/api/tareas-usuarios?estado=${stateVal}`;
+        this.cargando.set(true);
+        this.http.get<TareaRow[]>(urlOnly).subscribe({ next: (data) => { this.tareasUsuarios.set(data); this.cargando.set(false); }, error: (err) => { console.error(err); this.errorMessage.set('Error al buscar la tarea'); this.cargando.set(false); } });
+        return;
+      }
+      this.cargarTareasUsuarios();
+      return;
+    }
+
+    this.cargando.set(true);
+    let url = `/api/tareas-usuarios?titulo=${encodeURIComponent(q)}`;
+    if (this.searchState()) {
+      url += `&estado=${this.searchState()}`;
+    }
+    this.http.get<TareaRow[]>(url).subscribe({
+      next: (data) => {
+        this.tareasUsuarios.set(data);
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error buscando tarea:', err);
+        this.errorMessage.set('Error al buscar la tarea');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  clearSearch() {
+    this.searchTerm.set('');
+    this.cargarTareasUsuarios();
+  }
+
+  onSearchInput(event: Event) {
+    const v = (event.target as HTMLInputElement).value;
+    this.searchTerm.set(v);
+  }
+
+  onStateChange(event: Event) {
+    const v = (event.target as HTMLSelectElement).value;
+    this.searchState.set(v);
   }
 
   toggleFormulario() {

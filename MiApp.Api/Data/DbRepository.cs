@@ -20,6 +20,36 @@ public class DbRepository
         return _db.TareasRows.FromSqlRaw(sql).ToListAsync();
     }
 
+    // Get tasks that match the exact title (parameterized)
+    public Task<List<TareaRow>> GetTareasByTituloAsync(string titulo)
+    {
+        // Keep existing exact-title helper
+        return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} ORDER BY FechaCreacion, Id").ToListAsync();
+    }
+
+    // General fetch with optional filters: titulo (exact) and estado (bit)
+    public Task<List<TareaRow>> GetTareasAsync(string? titulo, bool? estado)
+    {
+        if (string.IsNullOrWhiteSpace(titulo) && !estado.HasValue)
+        {
+            return GetTareasRowsAsync();
+        }
+
+        // Build SQL with appropriate WHERE clauses and parameterize via FromSqlInterpolated
+        if (!string.IsNullOrWhiteSpace(titulo) && estado.HasValue)
+        {
+            return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} AND Estado = {estado.Value} ORDER BY FechaCreacion, Id").ToListAsync();
+        }
+        else if (!string.IsNullOrWhiteSpace(titulo))
+        {
+            return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} ORDER BY FechaCreacion, Id").ToListAsync();
+        }
+        else // estado.HasValue only
+        {
+            return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Estado = {estado.Value} ORDER BY FechaCreacion, Id").ToListAsync();
+        }
+    }
+
     // Create a new Tarea row using the exact INSERT pattern requested and return the inserted row.
     public async Task<TareaRow?> CreateTareaRowAsync(string titulo, string? descripcion, DateTime? fechaVencimiento)
     {
@@ -42,7 +72,7 @@ public class DbRepository
                 throw new InvalidOperationException("La fecha de vencimiento debe ser mayor o igual a la fecha actual.");
         }
 
-        // Use a DB transaction and OUTPUT to return the inserted row
+    // Use a DB transaction and OUTPUT to return the inserted row
         var conn = _db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
@@ -67,13 +97,14 @@ VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
 
             var pTitulo = cmd.CreateParameter();
             pTitulo.ParameterName = "@titulo";
-            pTitulo.Value = titulo;
+            pTitulo.Value = tituloTrim;
             cmd.Parameters.Add(pTitulo);
 
             var pDesc = cmd.CreateParameter();
             pDesc.ParameterName = "@descripcion";
             pDesc.Value = (object?)descripcion ?? DBNull.Value;
             cmd.Parameters.Add(pDesc);
+
 
             if (fechaVencimiento.HasValue)
             {

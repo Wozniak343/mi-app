@@ -23,10 +23,10 @@ public static class ApiEndpoints
 
 
         // Endpoint para obtener las filas desde la nueva tabla dbo.Tareas (reemplaza la vista previa de Usuario/Tarea)
-        app.MapGet("/api/tareas-usuarios", async (DbRepository repo) =>
+        app.MapGet("/api/tareas-usuarios", async (string? titulo, bool? estado, DbRepository repo) =>
         {
-            // NOTE: keeping the same route to minimize frontend changes; it now returns rows from dbo.Tareas
-            var filas = await repo.GetTareasRowsAsync();
+            // Use repository that supports optional filters
+            var filas = await repo.GetTareasAsync(titulo?.Trim(), estado);
             var proy = filas.Select(x => new { x.Id, x.Titulo, x.Descripcion, Estado = x.Estado, FechaCreacion = x.FechaCreacion, x.FechaVencimiento }).ToList();
             return Results.Ok(proy);
         });

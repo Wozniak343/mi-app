@@ -6,6 +6,18 @@
     </button>
   </div>
 
+  <!-- Search box -->
+  <div class="search-row" style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+    <input type="text" placeholder="Buscar por título" [value]="searchTerm()" (input)="onSearchInput($event)" (keyup.enter)="buscarTarea()" style="flex:1; padding:8px;" />
+    <select (change)="onStateChange($event)" style="padding:8px;">
+      <option value="">Todos</option>
+      <option value="true">Activa</option>
+      <option value="false">Inactiva</option>
+    </select>
+    <button class="btn-primary" (click)="buscarTarea()">Buscar</button>
+    <button class="btn-secondary" (click)="clearSearch()">Limpiar</button>
+  </div>
+
   <!-- Formulario para crear nueva tarea -->
   @if (mostrarFormulario()) {
     <div class="form-container">
@@ -44,6 +56,8 @@
             <span class="error-text">La fecha de vencimiento debe ser hoy o posterior</span>
           }
         </div>
+
+        
 
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="toggleFormulario()">
