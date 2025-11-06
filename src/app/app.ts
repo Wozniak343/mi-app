@@ -16,6 +16,7 @@ interface TareaRow {
 interface CrearTareaRequest {
   titulo: string;
   descripcion?: string | null;
+  fechaVencimiento?: string | null;
 }
 
 @Component({
@@ -32,13 +33,15 @@ export class App implements OnInit {
   tareasUsuarios = signal<TareaRow[]>([]);
   mostrarFormulario = signal(false);
   cargando = signal(false);
+  errorMessage = signal<string | null>(null);
 
   tareaForm: FormGroup;
 
   constructor() {
     this.tareaForm = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(3)]],
-      descripcion: ['']
+      descripcion: [''],
+      fechaVencimiento: ['']
     });
   }
 
@@ -69,10 +72,29 @@ export class App implements OnInit {
     }
   }
 
+  closeError() {
+    this.errorMessage.set(null);
+  }
+
   crearTarea() {
     if (this.tareaForm.valid) {
       this.cargando.set(true);
       const formData = this.tareaForm.value as CrearTareaRequest;
+
+      // Client-side validation: fechaVencimiento must be >= today if provided
+      if (formData.fechaVencimiento) {
+        const picked = new Date(formData.fechaVencimiento);
+        // normalize to date-only
+        const pickedDate = new Date(picked.getFullYear(), picked.getMonth(), picked.getDate());
+        const today = new Date();
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (pickedDate < todayDate) {
+          // mark control as invalid
+          this.tareaForm.get('fechaVencimiento')?.setErrors({ minDate: true });
+          this.cargando.set(false);
+          return;
+        }
+      }
 
       this.http.post<TareaRow>('/api/tareas-usuarios', formData)
         .subscribe({
@@ -84,9 +106,22 @@ export class App implements OnInit {
             this.tareaForm.reset();
             this.mostrarFormulario.set(false);
             this.cargando.set(false);
+            this.errorMessage.set(null);
           },
           error: (error) => {
             console.error('Error al crear tarea:', error);
+            // Try to extract the server-sent message body, fallback to generic
+            let msg = 'Error al crear la tarea';
+            try {
+              // Angular's HttpErrorResponse: error.error may contain the body
+              const body = (error as any).error;
+              if (body && body.error) msg = body.error;
+              else if (body && body.title) msg = body.title;
+              else if ((error as any).message) msg = (error as any).message;
+            } catch {
+              /* ignore */
+            }
+            this.errorMessage.set(msg);
             this.cargando.set(false);
           }
         });

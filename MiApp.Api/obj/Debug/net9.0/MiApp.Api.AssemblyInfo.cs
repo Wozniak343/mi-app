@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MiApp.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be13b6421146df54587bad9ed983173fc0004304")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2dacfe892e878acb72d740746445aea933be6068")]
 [assembly: System.Reflection.AssemblyProductAttribute("MiApp.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MiApp.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

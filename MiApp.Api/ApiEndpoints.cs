@@ -37,12 +37,23 @@ public static class ApiEndpoints
             if (string.IsNullOrWhiteSpace(req.Titulo))
                 return Results.BadRequest(new { error = "Titulo es requerido" });
 
-            var created = await repo.CreateTareaRowAsync(req.Titulo.Trim(), req.Descripcion);
-            if (created == null)
-                return Results.BadRequest(new { error = "No se pudo crear la tarea" });
+            try
+            {
+                var created = await repo.CreateTareaRowAsync(req.Titulo.Trim(), req.Descripcion, req.FechaVencimiento);
+                if (created == null)
+                    return Results.BadRequest(new { error = "No se pudo crear la tarea" });
 
-            // Return Created with the inserted row
-            return Results.Created($"/api/tareas-usuarios/{created.Id}", created);
+                // Return Created with the inserted row
+                return Results.Created($"/api/tareas-usuarios/{created.Id}", created);
+            }
+            catch (InvalidOperationException inv)
+            {
+                return Results.BadRequest(new { error = inv.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: $"Error interno: {ex.Message}", statusCode: 500);
+            }
         });
 
         // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.

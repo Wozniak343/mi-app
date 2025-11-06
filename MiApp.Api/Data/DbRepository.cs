@@ -21,8 +21,27 @@ public class DbRepository
     }
 
     // Create a new Tarea row using the exact INSERT pattern requested and return the inserted row.
-    public async Task<TareaRow?> CreateTareaRowAsync(string titulo, string? descripcion)
+    public async Task<TareaRow?> CreateTareaRowAsync(string titulo, string? descripcion, DateTime? fechaVencimiento)
     {
+        if (string.IsNullOrWhiteSpace(titulo))
+            throw new InvalidOperationException("Titulo es requerido.");
+
+        // Normalize title
+        var tituloTrim = titulo.Trim();
+
+        // Check for duplicate title (exact match)
+        var exists = await _db.TareasRows.AnyAsync(t => t.Titulo == tituloTrim);
+        if (exists)
+            throw new InvalidOperationException("Ya existe una tarea con el mismo título.");
+
+        // Validate fechaVencimiento when provided (must be >= today)
+        if (fechaVencimiento.HasValue)
+        {
+            var today = DateTime.Now.Date;
+            if (fechaVencimiento.Value.Date < today)
+                throw new InvalidOperationException("La fecha de vencimiento debe ser mayor o igual a la fecha actual.");
+        }
+
         // Use a DB transaction and OUTPUT to return the inserted row
         var conn = _db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open) await conn.OpenAsync();
@@ -33,9 +52,18 @@ public class DbRepository
         {
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = dbTrans;
-            cmd.CommandText = @"INSERT INTO dbo.Tareas (Titulo, Descripcion, FechaVencimiento)
+            if (fechaVencimiento.HasValue)
+            {
+                cmd.CommandText = @"INSERT INTO dbo.Tareas (Titulo, Descripcion, FechaVencimiento)
+OUTPUT INSERTED.Id, INSERTED.Titulo, INSERTED.Descripcion, INSERTED.Estado, INSERTED.FechaCreacion, INSERTED.FechaVencimiento
+VALUES (@titulo, @descripcion, @fechaVencimiento);";
+            }
+            else
+            {
+                cmd.CommandText = @"INSERT INTO dbo.Tareas (Titulo, Descripcion, FechaVencimiento)
 OUTPUT INSERTED.Id, INSERTED.Titulo, INSERTED.Descripcion, INSERTED.Estado, INSERTED.FechaCreacion, INSERTED.FechaVencimiento
 VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
+            }
 
             var pTitulo = cmd.CreateParameter();
             pTitulo.ParameterName = "@titulo";
@@ -46,6 +74,14 @@ VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
             pDesc.ParameterName = "@descripcion";
             pDesc.Value = (object?)descripcion ?? DBNull.Value;
             cmd.Parameters.Add(pDesc);
+
+            if (fechaVencimiento.HasValue)
+            {
+                var pFecha = cmd.CreateParameter();
+                pFecha.ParameterName = "@fechaVencimiento";
+                pFecha.Value = fechaVencimiento.Value.Date;
+                cmd.Parameters.Add(pFecha);
+            }
 
             await using var reader = await cmd.ExecuteReaderAsync();
             TareaRow? result = null;
