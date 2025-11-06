@@ -1,0 +1,6 @@
+@MiApp.Api_HostAddress = http://localhost:5028
+
+GET {{MiApp.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
