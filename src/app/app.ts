@@ -14,11 +14,8 @@ interface TareaRow {
 }
 
 interface CrearTareaRequest {
-  nombre: string;
-  email: string;
   titulo: string;
-  descripcion?: string;
-  fechaVencimiento?: string;
+  descripcion?: string | null;
 }
 
 @Component({
@@ -40,11 +37,8 @@ export class App implements OnInit {
 
   constructor() {
     this.tareaForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
       titulo: ['', [Validators.required, Validators.minLength(3)]],
-      descripcion: [''],
-      fechaVencimiento: ['']
+      descripcion: ['']
     });
   }
 
@@ -80,13 +74,16 @@ export class App implements OnInit {
       this.cargando.set(true);
       const formData = this.tareaForm.value as CrearTareaRequest;
 
-      this.http.post('/api/crear-tarea', formData)
+      this.http.post<TareaRow>('/api/tareas-usuarios', formData)
         .subscribe({
-          next: (response) => {
-            console.log('Tarea creada:', response);
+          next: (created) => {
+            console.log('Tarea creada:', created);
+            // Insert the created row into the UI immediately
+            const current = this.tareasUsuarios();
+            this.tareasUsuarios.set([...(current ?? []), created]);
             this.tareaForm.reset();
             this.mostrarFormulario.set(false);
-            this.cargarTareasUsuarios(); // Recargar la tabla
+            this.cargando.set(false);
           },
           error: (error) => {
             console.error('Error al crear tarea:', error);

@@ -11,34 +11,6 @@
     <div class="form-container">
       <h2>Crear Nueva Tarea</h2>
       <form [formGroup]="tareaForm" (ngSubmit)="crearTarea()">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="nombre">Nombre *</label>
-            <input
-              id="nombre"
-              type="text"
-              formControlName="nombre"
-              placeholder="Nombre del usuario"
-              [class.error]="tareaForm.get('nombre')?.invalid && tareaForm.get('nombre')?.touched">
-            @if (tareaForm.get('nombre')?.invalid && tareaForm.get('nombre')?.touched) {
-              <span class="error-text">El nombre es requerido (mínimo 2 caracteres)</span>
-            }
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email *</label>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              placeholder="email@ejemplo.com"
-              [class.error]="tareaForm.get('email')?.invalid && tareaForm.get('email')?.touched">
-            @if (tareaForm.get('email')?.invalid && tareaForm.get('email')?.touched) {
-              <span class="error-text">Ingresa un email válido</span>
-            }
-          </div>
-        </div>
-
         <div class="form-group">
           <label for="titulo">Título de la Tarea *</label>
           <input
@@ -61,14 +33,6 @@
             rows="3"></textarea>
         </div>
 
-        <div class="form-group">
-          <label for="fechaVencimiento">Fecha de Vencimiento</label>
-          <input
-            id="fechaVencimiento"
-            type="date"
-            formControlName="fechaVencimiento">
-        </div>
-
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="toggleFormulario()">
             Cancelar
@@ -89,6 +53,7 @@
       <table>
         <thead>
           <tr>
+              <th>ID</th>
             <th>Título</th>
             <th>Descripción</th>
             <th>Estado</th>
@@ -99,6 +64,7 @@
         <tbody>
           @for (item of tareasUsuarios(); track $index) {
             <tr>
+                <td>{{ item.id }}</td>
               <td>{{ item.titulo }}</td>
               <td>{{ item.descripcion || '—' }}</td>
               <td>

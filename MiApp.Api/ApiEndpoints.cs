@@ -1,4 +1,5 @@
 using MiApp.Api.Data;
+using System.Linq;
 
 namespace MiApp.Api;
 
@@ -28,6 +29,20 @@ public static class ApiEndpoints
             var filas = await repo.GetTareasRowsAsync();
             var proy = filas.Select(x => new { x.Id, x.Titulo, x.Descripcion, Estado = x.Estado, FechaCreacion = x.FechaCreacion, x.FechaVencimiento }).ToList();
             return Results.Ok(proy);
+        });
+
+        // Endpoint to create a new Tarea row following the exact INSERT pattern requested.
+        app.MapPost("/api/tareas-usuarios", async (CrearTareaRowRequest req, DbRepository repo) =>
+        {
+            if (string.IsNullOrWhiteSpace(req.Titulo))
+                return Results.BadRequest(new { error = "Titulo es requerido" });
+
+            var created = await repo.CreateTareaRowAsync(req.Titulo.Trim(), req.Descripcion);
+            if (created == null)
+                return Results.BadRequest(new { error = "No se pudo crear la tarea" });
+
+            // Return Created with the inserted row
+            return Results.Created($"/api/tareas-usuarios/{created.Id}", created);
         });
 
         // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.
