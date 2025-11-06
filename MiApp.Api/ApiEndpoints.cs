@@ -56,6 +56,33 @@ public static class ApiEndpoints
             }
         });
 
+        // Endpoint to update an existing tarea by id
+        app.MapPut("/api/tareas-usuarios/{id}", async (int id, CrearTareaRowRequest req, DbRepository repo) =>
+        {
+            if (id <= 0)
+                return Results.BadRequest(new { error = "Id inválido" });
+
+            if (string.IsNullOrWhiteSpace(req.Titulo))
+                return Results.BadRequest(new { error = "Titulo es requerido" });
+
+            try
+            {
+                var updated = await repo.UpdateTareaRowAsync(id, req.Titulo.Trim(), req.Descripcion, req.FechaVencimiento);
+                if (updated == null)
+                    return Results.NotFound(new { error = $"No existe tarea con id {id}" });
+
+                return Results.Ok(updated);
+            }
+            catch (InvalidOperationException inv)
+            {
+                return Results.BadRequest(new { error = inv.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: $"Error interno: {ex.Message}", statusCode: 500);
+            }
+        });
+
         // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.
     }
 }

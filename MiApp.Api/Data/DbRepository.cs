@@ -139,4 +139,85 @@ VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
             throw;
         }
     }
+
+    // Update an existing Tarea by id. Returns the updated row, or null if not found.
+    public async Task<TareaRow?> UpdateTareaRowAsync(int id, string titulo, string? descripcion, DateTime? fechaVencimiento)
+    {
+        if (id <= 0) throw new InvalidOperationException("Id inválido.");
+        if (string.IsNullOrWhiteSpace(titulo)) throw new InvalidOperationException("Titulo es requerido.");
+
+        var tituloTrim = titulo.Trim();
+
+        // Check duplicate title excluding this id
+        var exists = await _db.TareasRows.AnyAsync(t => t.Titulo == tituloTrim && t.Id != id);
+        if (exists) throw new InvalidOperationException("Ya existe una tarea con el mismo título.");
+
+        // If fecha provided, validate
+        if (fechaVencimiento.HasValue)
+        {
+            var today = DateTime.Now.Date;
+            if (fechaVencimiento.Value.Date < today)
+                throw new InvalidOperationException("La fecha de vencimiento debe ser mayor o igual a la fecha actual.");
+        }
+
+        var conn = _db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+
+        await using var dbTrans = await conn.BeginTransactionAsync();
+        try
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = dbTrans;
+            cmd.CommandText = @"UPDATE dbo.Tareas
+SET Titulo = @titulo,
+    Descripcion = @descripcion,
+    FechaVencimiento = CASE WHEN @fechaVencimiento IS NULL THEN FechaVencimiento ELSE @fechaVencimiento END
+OUTPUT INSERTED.Id, INSERTED.Titulo, INSERTED.Descripcion, INSERTED.Estado, INSERTED.FechaCreacion, INSERTED.FechaVencimiento
+WHERE Id = @id;";
+
+            var pId = cmd.CreateParameter();
+            pId.ParameterName = "@id";
+            pId.Value = id;
+            cmd.Parameters.Add(pId);
+
+            var pTitulo = cmd.CreateParameter();
+            pTitulo.ParameterName = "@titulo";
+            pTitulo.Value = tituloTrim;
+            cmd.Parameters.Add(pTitulo);
+
+            var pDesc = cmd.CreateParameter();
+            pDesc.ParameterName = "@descripcion";
+            pDesc.Value = (object?)descripcion ?? DBNull.Value;
+            cmd.Parameters.Add(pDesc);
+
+            var pFecha = cmd.CreateParameter();
+            pFecha.ParameterName = "@fechaVencimiento";
+            pFecha.Value = (object?)fechaVencimiento?.Date ?? DBNull.Value;
+            cmd.Parameters.Add(pFecha);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            TareaRow? result = null;
+            if (await reader.ReadAsync())
+            {
+                result = new TareaRow
+                {
+                    Id = reader.GetInt32(0),
+                    Titulo = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Descripcion = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    Estado = !reader.IsDBNull(3) && reader.GetBoolean(3),
+                    FechaCreacion = reader.GetDateTime(4),
+                    FechaVencimiento = reader.IsDBNull(5) ? null : reader.GetDateTime(5)
+                };
+            }
+
+            await reader.CloseAsync();
+            await dbTrans.CommitAsync();
+            return result;
+        }
+        catch
+        {
+            try { await dbTrans.RollbackAsync(); } catch { }
+            throw;
+        }
+    }
 }

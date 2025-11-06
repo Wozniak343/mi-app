@@ -1,9 +1,14 @@
 <div class="container">
   <div class="header">
     <h1>Tareas por Usuario</h1>
-    <button class="btn-primary" (click)="toggleFormulario()">
-      {{ mostrarFormulario() ? 'Cancelar' : '+ Nueva Tarea' }}
-    </button>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="toggleFormulario()">
+        {{ mostrarFormulario() ? 'Cancelar' : '+ Nueva Tarea' }}
+      </button>
+      <button class="btn-secondary" (click)="openEditMode()">
+        {{ isEditing() ? 'Cerrar editar' : 'Editar' }}
+      </button>
+    </div>
   </div>
 
   <!-- Search box -->
@@ -23,6 +28,12 @@
     <div class="form-container">
       <h2>Crear Nueva Tarea</h2>
       <form [formGroup]="tareaForm" (ngSubmit)="crearTarea()">
+        @if (isEditing()) {
+          <div class="form-group">
+            <label for="id">Id de la Tarea (a editar)</label>
+            <input id="id" type="number" formControlName="id" placeholder="Id de la tarea a editar" />
+          </div>
+        }
         <div class="form-group">
           <label for="titulo">Título de la Tarea *</label>
           <input
@@ -57,7 +68,7 @@
           }
         </div>
 
-        
+
 
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="toggleFormulario()">
@@ -65,6 +76,9 @@
           </button>
           <button type="submit" class="btn-primary" [disabled]="cargando()">
             {{ cargando() ? 'Creando...' : 'Crear Tarea' }}
+          </button>
+          <button type="button" class="btn-primary" (click)="editarTarea()" [disabled]="cargando()" style="margin-left:8px;">
+            {{ cargando() ? 'Procesando...' : 'Editar Tarea' }}
           </button>
         </div>
       </form>

@@ -36,11 +36,13 @@ export class App implements OnInit {
   errorMessage = signal<string | null>(null);
   searchTerm = signal('');
   searchState = signal<string>('');
+  isEditing = signal(false);
 
   tareaForm: FormGroup;
 
   constructor() {
     this.tareaForm = this.fb.group({
+      id: [''],
       titulo: ['', [Validators.required, Validators.minLength(3)]],
       descripcion: [''],
       fechaVencimiento: ['']
@@ -117,10 +119,27 @@ export class App implements OnInit {
   }
 
   toggleFormulario() {
-    this.mostrarFormulario.set(!this.mostrarFormulario());
-    if (!this.mostrarFormulario()) {
+    const currently = this.mostrarFormulario();
+    if (!currently) {
+      // opening the form for creation by default
+      this.isEditing.set(false);
       this.tareaForm.reset();
+      this.mostrarFormulario.set(true);
+    } else {
+      // closing form
+      this.isEditing.set(false);
+      this.tareaForm.reset();
+      this.mostrarFormulario.set(false);
     }
+  }
+
+  openEditMode() {
+    // open the form in edit mode; user must enter an existing Id to edit
+    this.isEditing.set(true);
+    this.tareaForm.reset();
+    // ensure id control exists and empty
+    this.tareaForm.get('id')?.setValue('');
+    this.mostrarFormulario.set(true);
   }
 
   closeError() {
@@ -181,6 +200,48 @@ export class App implements OnInit {
       Object.keys(this.tareaForm.controls).forEach(key => {
         this.tareaForm.get(key)?.markAsTouched();
       });
+    }
+  }
+
+  editarTarea() {
+    // require id
+    const idVal = this.tareaForm.get('id')?.value;
+    const idNum = Number(idVal);
+    if (!idVal || !idNum || idNum <= 0) {
+      this.errorMessage.set('Debes proporcionar un Id válido para editar');
+      return;
+    }
+
+    if (this.tareaForm.valid) {
+      this.cargando.set(true);
+      const formData = this.tareaForm.value as CrearTareaRequest;
+      const url = `/api/tareas-usuarios/${idNum}`;
+      this.http.put<TareaRow>(url, formData).subscribe({
+        next: (updated) => {
+          // replace in UI list if present
+          const current = this.tareasUsuarios() ?? [];
+          const idx = current.findIndex(x => x.id === updated.id);
+          if (idx >= 0) {
+            current[idx] = updated;
+            this.tareasUsuarios.set([...current]);
+          } else {
+            // if not present, append
+            this.tareasUsuarios.set([...(current ?? []), updated]);
+          }
+          this.tareaForm.reset();
+          this.mostrarFormulario.set(false);
+          this.cargando.set(false);
+          this.errorMessage.set(null);
+        },
+        error: (error) => {
+          let msg = 'Error al editar la tarea';
+          try { const body = (error as any).error; if (body && body.error) msg = body.error; else if ((error as any).message) msg = (error as any).message; } catch {}
+          this.errorMessage.set(msg);
+          this.cargando.set(false);
+        }
+      });
+    } else {
+      Object.keys(this.tareaForm.controls).forEach(key => { this.tareaForm.get(key)?.markAsTouched(); });
     }
   }
 }

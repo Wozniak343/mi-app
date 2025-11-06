@@ -12,6 +12,12 @@
   margin-bottom: 2rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 h1 {
   color: #333;
   margin: 0;
