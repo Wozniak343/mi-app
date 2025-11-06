@@ -4,11 +4,11 @@ namespace MiApp.Api.Data;
 
 public static class DatabaseConfig
 {
-    // Register DbContext and related services. Builds a full connection string from explicit settings
-    // If no explicit settings are provided, falls back to ConnectionStrings:Default
+    // registro del DbContext y servicios. armo el connection string desde las opciones explícitas
+    // si no vienen esos valores, uso ConnectionStrings:Default del appsettings
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Try to read explicit DB settings (env vars or configuration)
+        // leo primero las variables directas (env o config) para el servidor, puerto, base, usuario y clave
     var server = configuration["DB_SERVER"] ?? configuration.GetValue<string>("DbSettings:Server") ?? "localhost";
     var port = configuration["DB_PORT"] ?? configuration.GetValue<string>("DbSettings:Port") ?? "1433";
     var database = configuration["DB_NAME"] ?? configuration.GetValue<string>("DbSettings:Database") ?? "MiAppDB";
@@ -18,13 +18,13 @@ public static class DatabaseConfig
         string connectionString;
         if (!string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(database) && !string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password))
         {
-            // Use provided values; default SQL Server encrypt and trust server cert for local dev
+            // uso los valores dados; por defecto activo Encrypt y confío en el certificado del servidor para desarrollo local
             var serverPart = !string.IsNullOrWhiteSpace(port) ? $"{server},{port}" : server;
             connectionString = $"Server={serverPart};Database={database};User Id={user};Password={password};Encrypt=True;TrustServerCertificate=True";
         }
         else
         {
-            // Fallback to standard connection string in appsettings
+            // si no hay datos explícitos, tomo el connection string Default del appsettings
             connectionString = configuration.GetConnectionString("Default") ?? throw new InvalidOperationException("No database configuration found.");
         }
 
@@ -33,11 +33,11 @@ public static class DatabaseConfig
         return services;
     }
 
-    // Intentionally do not auto-initialize or seed the database here.
-    // Per request, we avoid creating or seeding the DB automatically.
+    // no inicializo ni hago seed automático aquí a propósito
+    // por solicitud, dejamos la creación y seed del lado del entorno/DBA
     public static WebApplication InitializeDatabase(this WebApplication app)
     {
-        // No-op: leave DB initialization to the environment/DBAs. This prevents unexpected seeding.
+        // no-op: dejo la inicialización a quien administre la base; así evitamos datos sembrados sin querer
         return app;
     }
 }

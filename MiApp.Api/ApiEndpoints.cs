@@ -7,7 +7,7 @@ public static class ApiEndpoints
 {
     public static void Register(WebApplication app)
     {
-        // Test endpoint para verificar la conexión
+        // endpoint de prueba para ver si hay conexión a la base de datos
         app.MapGet("/api/test-connection", async (DbRepository repo) =>
         {
             try
@@ -22,16 +22,16 @@ public static class ApiEndpoints
         });
 
 
-        // Endpoint para obtener las filas desde la nueva tabla dbo.Tareas (reemplaza la vista previa de Usuario/Tarea)
+        // endpoint para traer filas de la tabla dbo.Tareas; esto reemplaza la vista vieja de Usuario/Tarea
         app.MapGet("/api/tareas-usuarios", async (string? titulo, bool? estado, DbRepository repo) =>
         {
-            // Use repository that supports optional filters
+            // uso el repo que ya maneja filtros opcionales
             var filas = await repo.GetTareasAsync(titulo?.Trim(), estado);
             var proy = filas.Select(x => new { x.Id, x.Titulo, x.Descripcion, Estado = x.Estado, FechaCreacion = x.FechaCreacion, x.FechaVencimiento }).ToList();
             return Results.Ok(proy);
         });
 
-        // Endpoint to create a new Tarea row following the exact INSERT pattern requested.
+        // endpoint para crear una fila en Tareas usando el INSERT que nos pidieron
         app.MapPost("/api/tareas-usuarios", async (CrearTareaRowRequest req, DbRepository repo) =>
         {
             if (string.IsNullOrWhiteSpace(req.Titulo))
@@ -43,7 +43,7 @@ public static class ApiEndpoints
                 if (created == null)
                     return Results.BadRequest(new { error = "No se pudo crear la tarea" });
 
-                // Return Created with the inserted row
+                // devuelvo Created con la fila insertada
                 return Results.Created($"/api/tareas-usuarios/{created.Id}", created);
             }
             catch (InvalidOperationException inv)
@@ -56,7 +56,7 @@ public static class ApiEndpoints
             }
         });
 
-        // Endpoint to update an existing tarea by id
+        // endpoint para actualizar una tarea por id
         app.MapPut("/api/tareas-usuarios/{id}", async (int id, CrearTareaRowRequest req, DbRepository repo) =>
         {
             if (id <= 0)
@@ -83,7 +83,7 @@ public static class ApiEndpoints
             }
         });
 
-        // Endpoint to delete a tarea by id
+        // endpoint para borrar una tarea por id
         app.MapDelete("/api/tareas-usuarios/{id}", async (int id, DbRepository repo) =>
         {
             if (id <= 0)
@@ -107,6 +107,5 @@ public static class ApiEndpoints
             }
         });
 
-        // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.
     }
 }

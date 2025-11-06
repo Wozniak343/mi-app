@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <!-- Search box -->
+  <!-- buscador por título (sencillo) -->
   <div class="search-row" style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
     <input type="text" placeholder="Buscar por título" [value]="searchTerm()" (input)="onSearchInput($event)" (keyup.enter)="buscarTarea()" style="flex:1; padding:8px;" />
     <select (change)="onStateChange($event)" style="padding:8px;">
@@ -40,7 +40,7 @@
       </h2>
       <form [formGroup]="tareaForm" (ngSubmit)="isDeleting() ? eliminarTarea() : crearTarea()">
 
-        <!-- Id input is shown for both edit and delete modes -->
+        <!-- el campo Id se usa tanto para editar como para eliminar -->
         @if (isEditing() || isDeleting()) {
           <div class="form-group">
             <label for="id">Id de la Tarea</label>
@@ -48,7 +48,7 @@
           </div>
         }
 
-        <!-- The rest of the fields are only shown when NOT deleting -->
+        <!-- los demás campos solo aparecen cuando no estamos eliminando -->
         @if (!isDeleting()) {
           <div class="form-group">
             <label for="titulo">Título de la Tarea *</label>

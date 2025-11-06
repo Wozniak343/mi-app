@@ -13,21 +13,21 @@ public class DbRepository
     }
 
     public Task<bool> TestConnectionAsync() => _db.Database.CanConnectAsync();
-    // New: read rows from the dbo.Tareas table (the table the UI shows now)
+    // nuevo: lee filas de la tabla dbo.Tareas (es la tabla que muestra la UI ahora)
     public Task<List<TareaRow>> GetTareasRowsAsync()
     {
         var sql = @"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas ORDER BY FechaCreacion, Id";
         return _db.TareasRows.FromSqlRaw(sql).ToListAsync();
     }
 
-    // Get tasks that match the exact title (parameterized)
+    // obtiene tareas que coinciden con el título exacto (parametrizado)
     public Task<List<TareaRow>> GetTareasByTituloAsync(string titulo)
     {
-        // Keep existing exact-title helper
+        // dejo el helper de título exacto
         return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} ORDER BY FechaCreacion, Id").ToListAsync();
     }
 
-    // General fetch with optional filters: titulo (exact) and estado (bit)
+    // consulta general con filtros opcionales: titulo (exacto) y estado (bit)
     public Task<List<TareaRow>> GetTareasAsync(string? titulo, bool? estado)
     {
         if (string.IsNullOrWhiteSpace(titulo) && !estado.HasValue)
@@ -35,7 +35,7 @@ public class DbRepository
             return GetTareasRowsAsync();
         }
 
-        // Build SQL with appropriate WHERE clauses and parameterize via FromSqlInterpolated
+        // armo el SQL con WHERE según filtros y parametrizo con FromSqlInterpolated
         if (!string.IsNullOrWhiteSpace(titulo) && estado.HasValue)
         {
             return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} AND Estado = {estado.Value} ORDER BY FechaCreacion, Id").ToListAsync();
@@ -44,27 +44,27 @@ public class DbRepository
         {
             return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Titulo = {titulo} ORDER BY FechaCreacion, Id").ToListAsync();
         }
-        else // estado.HasValue only
+        else // solo estado.HasValue
         {
             return _db.TareasRows.FromSqlInterpolated($"SELECT Id, Titulo, Descripcion, Estado, FechaCreacion, FechaVencimiento FROM dbo.Tareas WHERE Estado = {estado.Value} ORDER BY FechaCreacion, Id").ToListAsync();
         }
     }
 
-    // Create a new Tarea row using the exact INSERT pattern requested and return the inserted row.
+    // crea una fila en Tareas usando el INSERT exacto pedido y devuelve la fila insertada
     public async Task<TareaRow?> CreateTareaRowAsync(string titulo, string? descripcion, DateTime? fechaVencimiento)
     {
         if (string.IsNullOrWhiteSpace(titulo))
             throw new InvalidOperationException("Titulo es requerido.");
 
-        // Normalize title
+        // normalizo el título
         var tituloTrim = titulo.Trim();
 
-        // Check for duplicate title (exact match)
+        // verifico si existe un título igual (coincidencia exacta)
         var exists = await _db.TareasRows.AnyAsync(t => t.Titulo == tituloTrim);
         if (exists)
             throw new InvalidOperationException("Ya existe una tarea con el mismo título.");
 
-        // Validate fechaVencimiento when provided (must be >= today)
+        // valido fechaVencimiento si viene (debe ser >= hoy)
         if (fechaVencimiento.HasValue)
         {
             var today = DateTime.Now.Date;
@@ -72,11 +72,11 @@ public class DbRepository
                 throw new InvalidOperationException("La fecha de vencimiento debe ser mayor o igual a la fecha actual.");
         }
 
-    // Use a DB transaction and OUTPUT to return the inserted row
+    // uso transacción y OUTPUT para devolver la fila insertada
         var conn = _db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
-        // Use a native DbTransaction on the connection so we can attach it to the DbCommand
+        // uso DbTransaction nativa de la conexión para asociarla al DbCommand
         await using var dbTrans = await conn.BeginTransactionAsync();
         try
         {
@@ -140,7 +140,7 @@ VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
         }
     }
 
-    // Update an existing Tarea by id. Returns the updated row, or null if not found.
+    // actualiza una tarea por id. devuelve la fila actualizada o null si no existe
     public async Task<TareaRow?> UpdateTareaRowAsync(int id, string titulo, string? descripcion, DateTime? fechaVencimiento)
     {
         if (id <= 0) throw new InvalidOperationException("Id inválido.");
@@ -148,11 +148,11 @@ VALUES (@titulo, @descripcion, DATEADD(DAY,7,CAST(SYSDATETIME() AS DATE)));";
 
         var tituloTrim = titulo.Trim();
 
-        // Check duplicate title excluding this id
+        // verifico título duplicado excluyendo este id
         var exists = await _db.TareasRows.AnyAsync(t => t.Titulo == tituloTrim && t.Id != id);
         if (exists) throw new InvalidOperationException("Ya existe una tarea con el mismo título.");
 
-        // If fecha provided, validate
+        // si viene fecha, la valido
         if (fechaVencimiento.HasValue)
         {
             var today = DateTime.Now.Date;
@@ -221,7 +221,7 @@ WHERE Id = @id;";
         }
     }
 
-    // Delete a tarea by id. Returns true if a row was deleted, false if not found.
+    // elimina una tarea por id. devuelve true si borró una fila, false si no la encontró
     public async Task<bool> DeleteTareaAsync(int id)
     {
         if (id <= 0) throw new InvalidOperationException("Id inválido.");
@@ -247,7 +247,7 @@ WHERE Id = @id;";
             if (result is int rows)
                 return rows > 0;
 
-            // some providers return long
+            // algunos proveedores devuelven long
             if (result is long l)
                 return l > 0;
 
