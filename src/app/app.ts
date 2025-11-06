@@ -4,12 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-interface TareaUsuario {
+interface TareaRow {
   id: number;
-  nombre: string;
-  email: string;
   titulo: string;
-  completada: boolean;
+  descripcion: string | null;
+  estado: boolean;
+  fechaCreacion: string;
   fechaVencimiento: string | null;
 }
 
@@ -32,7 +32,7 @@ export class App implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
 
-  tareasUsuarios = signal<TareaUsuario[]>([]);
+  tareasUsuarios = signal<TareaRow[]>([]);
   mostrarFormulario = signal(false);
   cargando = signal(false);
 
@@ -54,7 +54,7 @@ export class App implements OnInit {
 
   cargarTareasUsuarios() {
     this.cargando.set(true);
-    this.http.get<TareaUsuario[]>('/api/tareas-usuarios')
+  this.http.get<TareaRow[]>('/api/tareas-usuarios')
       .subscribe({
         next: (data) => {
           this.tareasUsuarios.set(data);

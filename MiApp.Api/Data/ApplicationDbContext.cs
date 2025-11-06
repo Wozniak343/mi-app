@@ -9,36 +9,21 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Usuario> Usuarios { get; set; } = null!;
-    public DbSet<Tarea> Tareas { get; set; } = null!;
-    // NOTE: Access to the materialized `TareaUsuario` table should go through `DbRepository`.
-    // This property is required for EF Core mapping but should not be queried directly from other
-    // parts of the application. Use `DbRepository.GetTareaUsuarioRowsAsync()` instead.
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public DbSet<TareaUsuario> TareasUsuarios { get; set; } = null!;
+    // Represents the new table dbo.Tareas (used for the main UI table)
+    public DbSet<TareaRow> TareasRows { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Usuario>(eb =>
-        {
-            eb.ToTable("Usuario");
-            eb.HasIndex(u => u.Email).IsUnique().HasDatabaseName("UX_Usuario_Email");
-            eb.Property(u => u.Activo).HasDefaultValue(true);
-        });
+        // Previous entities Usuario, Tarea and TareaUsuario removed - application now uses dbo.Tareas via TareaRow
 
-        modelBuilder.Entity<Tarea>(eb =>
+        modelBuilder.Entity<TareaRow>(eb =>
         {
-            eb.ToTable("Tarea");
-            eb.Property(t => t.Completada).HasDefaultValue(false);
-            eb.Property(t => t.FechaCreacion).HasDefaultValueSql("SYSDATETIME()");
-            eb.HasOne<Usuario>().WithMany().HasForeignKey(t => t.UsuarioId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_Tarea_Usuario");
-        });
-
-        modelBuilder.Entity<TareaUsuario>(eb =>
-        {
-            eb.ToTable("TareaUsuario");
+            eb.ToTable("Tareas");
+            eb.Property(x => x.Titulo).HasMaxLength(150).IsRequired();
+            eb.Property(x => x.Estado).HasDefaultValue(false);
+            eb.Property(x => x.FechaCreacion).HasDefaultValueSql("SYSDATETIME()");
         });
     }
 }

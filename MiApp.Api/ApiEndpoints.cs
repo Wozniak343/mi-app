@@ -20,41 +20,16 @@ public static class ApiEndpoints
             }
         });
 
-        // Endpoint para obtener todos los usuarios
-        app.MapGet("/api/usuarios", async (DbRepository repo) =>
-        {
-            var usuarios = await repo.GetUsuariosAsync();
-            return Results.Ok(usuarios);
-        });
 
-        // Endpoint para crear nueva tarea
-        app.MapPost("/api/crear-tarea", async (DbRepository repo, MiApp.Api.Data.CrearTareaRequest request) =>
-        {
-            try
-            {
-                var id = await repo.CreateTareaAsync(request);
-                // Return the created tarea id
-                return Results.Ok(new { mensaje = "Tarea creada exitosamente", tareaId = id });
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { error = $"Error al crear tarea: {ex.Message}" });
-            }
-        });
-
-        // Endpoint para obtener tareas-usuarios desde la tabla materializada dbo.TareaUsuario
+        // Endpoint para obtener las filas desde la nueva tabla dbo.Tareas (reemplaza la vista previa de Usuario/Tarea)
         app.MapGet("/api/tareas-usuarios", async (DbRepository repo) =>
         {
-            var filas = await repo.GetTareaUsuarioRowsAsync();
-            var proy = filas.Select(x => new { x.Id, x.Nombre, x.Email, x.Titulo, x.Completada, x.FechaVencimiento }).ToList();
+            // NOTE: keeping the same route to minimize frontend changes; it now returns rows from dbo.Tareas
+            var filas = await repo.GetTareasRowsAsync();
+            var proy = filas.Select(x => new { x.Id, x.Titulo, x.Descripcion, Estado = x.Estado, FechaCreacion = x.FechaCreacion, x.FechaVencimiento }).ToList();
             return Results.Ok(proy);
         });
 
-        // Return all tareas with the usuario's nombre
-        app.MapGet("/tasks", async (DbRepository repo) =>
-        {
-            var tasks = await repo.GetTasksWithUserNameAsync();
-            return Results.Ok(tasks);
-        });
+        // Note: endpoints related to Usuario/Tarea/TareaUsuario were removed per request.
     }
 }

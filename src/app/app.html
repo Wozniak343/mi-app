@@ -89,24 +89,24 @@
       <table>
         <thead>
           <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Título de Tarea</th>
-            <th>Completada</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Fecha Creación</th>
             <th>Fecha Vencimiento</th>
           </tr>
         </thead>
         <tbody>
           @for (item of tareasUsuarios(); track $index) {
             <tr>
-              <td>{{ item.nombre }}</td>
-              <td>{{ item.email }}</td>
               <td>{{ item.titulo }}</td>
+              <td>{{ item.descripcion || '—' }}</td>
               <td>
-                <span [class.completada]="item.completada" [class.pendiente]="!item.completada">
-                  {{ item.completada ? '✓ Completada' : '⏱ Pendiente' }}
+                <span [class.completada]="item.estado" [class.pendiente]="!item.estado">
+                  {{ item.estado ? '✓ Activa' : '⏱ Inactiva' }}
                 </span>
               </td>
+              <td>{{ item.fechaCreacion ? (item.fechaCreacion | date: 'dd/MM/yyyy') : '—' }}</td>
               <td>{{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : 'Sin fecha' }}</td>
             </tr>
           }
