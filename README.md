@@ -1,4 +1,4 @@
-# Mi App - Gestor de Tareas (API + Frontend) - Prueba de Fullstack
+# Gestor de Tareas (API + Frontend) - Prueba de Fullstack
 
 Este repositorio contiene una pequeña aplicación full-stack para gestionar tareas. Está compuesta por:
 
@@ -192,16 +192,16 @@ FROM dbo.Tareas;
 ```
 3) Qué hace cada parte (explicado fácil)
 
-`Id INT IDENTITY(1,1) PRIMARY KEY:` el id se va aumentando solito (1, 2, 3…), y es la clave principal.
-`Titulo NVARCHAR(150) NOT NULL:` texto corto obligatorio (hasta 150 caracteres).
-`Descripcion NVARCHAR(MAX) NULL:` texto largo opcional.
-`Estado BIT NOT NULL DEFAULT (0):` 0 o 1. Por defecto queda en 0 (yo lo uso como “inactiva”).
-`FechaCreacion DATETIME2(0) DEFAULT (SYSDATETIME()):` guarda la fecha/hora al momento de insertar.
-`FechaVencimiento DATE NULL:` fecha opcional.
-`CK_Tareas_FecVenc:` esta regla evita poner una fecha de vencimiento menor a la fecha de creación (se permite NULL).
-`INSERT de ejemplo:` agrega dos tareas; la segunda entra como activa (Estado = 1). Las dos tienen vencimiento a 7 días.
-`DELETE:` borra por Id. Cambia el 3 por el id que quieras eliminar.
-`SELECT *:` muestra lo que hay en la tabla para confirmar.
+- `Id INT IDENTITY(1,1) PRIMARY KEY:` el id se va aumentando solito (1, 2, 3…), y es la clave principal.
+- `Titulo NVARCHAR(150) NOT NULL:` texto corto obligatorio (hasta 150 caracteres).
+- `Descripcion NVARCHAR(MAX) NULL:` texto largo opcional.
+- `Estado BIT NOT NULL DEFAULT (0):` 0 o 1. Por defecto queda en 0 (yo lo uso como “inactiva”).
+- `FechaCreacion DATETIME2(0) DEFAULT (SYSDATETIME()):` guarda la fecha/hora al momento de insertar.
+- `FechaVencimiento DATE NULL:` fecha opcional.
+- `CK_Tareas_FecVenc:` esta regla evita poner una fecha de vencimiento menor a la fecha de creación (se permite NULL).
+- `INSERT de ejemplo:` agrega dos tareas; la segunda entra como activa (Estado = 1). Las dos tienen vencimiento a 7 días.
+- `DELETE:` borra por Id. Cambia el 3 por el id que quieras eliminar.
+- `SELECT *:` muestra lo que hay en la tabla para confirmar.
 
 4) Notas rápidas por si algo no arranca
 
