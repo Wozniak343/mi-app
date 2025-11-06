@@ -37,6 +37,7 @@ export class App implements OnInit {
   searchTerm = signal('');
   searchState = signal<string>('');
   isEditing = signal(false);
+  isDeleting = signal(false);
 
   tareaForm: FormGroup;
 
@@ -123,11 +124,13 @@ export class App implements OnInit {
     if (!currently) {
       // opening the form for creation by default
       this.isEditing.set(false);
+      this.isDeleting.set(false);
       this.tareaForm.reset();
       this.mostrarFormulario.set(true);
     } else {
       // closing form
       this.isEditing.set(false);
+      this.isDeleting.set(false);
       this.tareaForm.reset();
       this.mostrarFormulario.set(false);
     }
@@ -136,8 +139,18 @@ export class App implements OnInit {
   openEditMode() {
     // open the form in edit mode; user must enter an existing Id to edit
     this.isEditing.set(true);
+    this.isDeleting.set(false);
     this.tareaForm.reset();
     // ensure id control exists and empty
+    this.tareaForm.get('id')?.setValue('');
+    this.mostrarFormulario.set(true);
+  }
+
+  openDeleteMode() {
+    // open the form in delete mode: only Id is required
+    this.isDeleting.set(true);
+    this.isEditing.set(false);
+    this.tareaForm.reset();
     this.tareaForm.get('id')?.setValue('');
     this.mostrarFormulario.set(true);
   }
@@ -243,5 +256,37 @@ export class App implements OnInit {
     } else {
       Object.keys(this.tareaForm.controls).forEach(key => { this.tareaForm.get(key)?.markAsTouched(); });
     }
+  }
+
+  eliminarTarea() {
+    // require id
+    const idVal = this.tareaForm.get('id')?.value;
+    const idNum = Number(idVal);
+    if (!idVal || !idNum || idNum <= 0) {
+      this.errorMessage.set('Debes proporcionar un Id válido para eliminar');
+      return;
+    }
+
+    this.cargando.set(true);
+    const url = `/api/tareas-usuarios/${idNum}`;
+    this.http.delete(url).subscribe({
+      next: (_) => {
+        // remove from UI list if present
+        const current = this.tareasUsuarios() ?? [];
+        const remaining = current.filter(x => x.id !== idNum);
+        this.tareasUsuarios.set([...remaining]);
+        this.tareaForm.reset();
+        this.mostrarFormulario.set(false);
+        this.isDeleting.set(false);
+        this.cargando.set(false);
+        this.errorMessage.set(null);
+      },
+      error: (error) => {
+        let msg = 'Error al eliminar la tarea';
+        try { const body = (error as any).error; if (body && body.error) msg = body.error; else if ((error as any).message) msg = (error as any).message; } catch {}
+        this.errorMessage.set(msg);
+        this.cargando.set(false);
+      }
+    });
   }
 }
