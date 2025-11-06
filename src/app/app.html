@@ -1,8 +1,91 @@
 <div class="container">
-  <h1>Tareas por Usuario</h1>
+  <div class="header">
+    <h1>Tareas por Usuario</h1>
+    <button class="btn-primary" (click)="toggleFormulario()">
+      {{ mostrarFormulario() ? 'Cancelar' : '+ Nueva Tarea' }}
+    </button>
+  </div>
 
+  <!-- Formulario para crear nueva tarea -->
+  @if (mostrarFormulario()) {
+    <div class="form-container">
+      <h2>Crear Nueva Tarea</h2>
+      <form [formGroup]="tareaForm" (ngSubmit)="crearTarea()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">Nombre *</label>
+            <input
+              id="nombre"
+              type="text"
+              formControlName="nombre"
+              placeholder="Nombre del usuario"
+              [class.error]="tareaForm.get('nombre')?.invalid && tareaForm.get('nombre')?.touched">
+            @if (tareaForm.get('nombre')?.invalid && tareaForm.get('nombre')?.touched) {
+              <span class="error-text">El nombre es requerido (mínimo 2 caracteres)</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="email@ejemplo.com"
+              [class.error]="tareaForm.get('email')?.invalid && tareaForm.get('email')?.touched">
+            @if (tareaForm.get('email')?.invalid && tareaForm.get('email')?.touched) {
+              <span class="error-text">Ingresa un email válido</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="titulo">Título de la Tarea *</label>
+          <input
+            id="titulo"
+            type="text"
+            formControlName="titulo"
+            placeholder="Título de la tarea"
+            [class.error]="tareaForm.get('titulo')?.invalid && tareaForm.get('titulo')?.touched">
+          @if (tareaForm.get('titulo')?.invalid && tareaForm.get('titulo')?.touched) {
+            <span class="error-text">El título es requerido (mínimo 3 caracteres)</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea
+            id="descripcion"
+            formControlName="descripcion"
+            placeholder="Descripción opcional de la tarea"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="fechaVencimiento">Fecha de Vencimiento</label>
+          <input
+            id="fechaVencimiento"
+            type="date"
+            formControlName="fechaVencimiento">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="toggleFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="cargando()">
+            {{ cargando() ? 'Creando...' : 'Crear Tarea' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Tabla de tareas -->
   <div class="table-container">
-    @if (tareasUsuarios().length > 0) {
+    @if (cargando() && !mostrarFormulario()) {
+      <p class="loading">Cargando tareas...</p>
+    } @else if (tareasUsuarios().length > 0) {
       <table>
         <thead>
           <tr>

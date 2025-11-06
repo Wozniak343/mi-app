@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 
 namespace MiApp.Api.Data;
 
@@ -10,6 +11,10 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Usuario> Usuarios { get; set; } = null!;
     public DbSet<Tarea> Tareas { get; set; } = null!;
+    // NOTE: Access to the materialized `TareaUsuario` table should go through `DbRepository`.
+    // This property is required for EF Core mapping but should not be queried directly from other
+    // parts of the application. Use `DbRepository.GetTareaUsuarioRowsAsync()` instead.
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public DbSet<TareaUsuario> TareasUsuarios { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
